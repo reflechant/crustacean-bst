@@ -1,4 +1,8 @@
-use std::cmp::Ord;
+use std::{cmp::Ord, mem::replace};
+
+pub struct Tree<T>(Option<Node<T>>)
+where
+    T: Ord;
 
 #[derive(PartialEq)]
 pub struct Node<T>
@@ -14,16 +18,37 @@ impl<T> Node<T>
 where
     T: Ord,
 {
-    pub fn new(value: T) -> Self {
+    fn new(value: T) -> Self {
         Self {
             left: None,
             right: None,
             value,
         }
     }
+}
+
+impl<T> From<T> for Tree<T>
+where
+    T: Ord,
+{
+    fn from(value: T) -> Self {
+        Tree(Some(Node::new(value)))
+    }
+}
+
+impl<T> Tree<T>
+where
+    T: Ord,
+{
+    pub fn new() -> Self {
+        Tree(None)
+    }
 
     pub fn get(&self, value: T) -> Option<T> {
-        let mut node = self;
+        let mut node = match &self.0 {
+            Some(node) => node,
+            None => return None,
+        };
 
         loop {
             if value < node.value {
@@ -42,8 +67,37 @@ where
         }
     }
 
-    pub fn insert(&self, value: T) -> () {
-        todo!("not implemented")
+    pub fn insert(&mut self, value: T) -> () {
+        let mut node: &mut Node<T> = match &mut self.0 {
+            Some(node) => node,
+            None => {
+                replace(self, Tree(Some(Node::new(value))));
+                return;
+            }
+        };
+
+        loop {
+            if value < node.value {
+                if let Some(n) = &mut node.left {
+                    node = n;
+                } else {
+                    replace(&mut node.left, Some(Box::new(Node::new(value))));
+                    return ();
+                }
+                
+            } else if value > node.value {
+                node = match &mut node.right {
+                    Some(n) => &mut n,
+                    None => {
+                        replace(&mut node.right, Some(Box::new(Node::new(value))));
+                        return ();
+                    }
+                };
+            } else {
+                // the value is already present
+                return ();
+            }
+        }
     }
 }
 
