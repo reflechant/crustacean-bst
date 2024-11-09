@@ -32,7 +32,7 @@ where
                     None => return None,
                 };
             } else if value > node.value {
-                node = match &node.left {
+                node = match &node.right {
                     Some(n) => &n,
                     None => return None,
                 };
@@ -40,8 +40,6 @@ where
                 return Some(value);
             }
         }
-
-        None
     }
 
     pub fn insert(&self, value: T) -> () {
