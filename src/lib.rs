@@ -1,4 +1,4 @@
-use std::{cmp::Ord, mem::replace};
+use std::cmp::Ord;
 
 pub struct Tree<T>(Option<Node<T>>)
 where
@@ -71,28 +71,28 @@ where
         let mut node: &mut Node<T> = match &mut self.0 {
             Some(node) => node,
             None => {
-                replace(self, Tree(Some(Node::new(value))));
+                *self = Tree(Some(Node::new(value)));
                 return;
             }
         };
 
         loop {
             if value < node.value {
-                if let Some(n) = &mut node.left {
-                    node = n;
-                } else {
-                    replace(&mut node.left, Some(Box::new(Node::new(value))));
-                    return ();
-                }
-                
-            } else if value > node.value {
-                node = match &mut node.right {
-                    Some(n) => &mut n,
-                    None => {
-                        replace(&mut node.right, Some(Box::new(Node::new(value))));
-                        return ();
+                match &mut node.left {
+                    Some(n) => node = n,
+                    n @ None => {
+                        *n = Some(Box::new(Node::new(value)));
+                        return;
                     }
-                };
+                }
+            } else if value > node.value {
+                match &mut node.right {
+                    Some(n) => node = n,
+                    n @ None => {
+                        *n = Some(Box::new(Node::new(value)));
+                        return;
+                    }
+                }
             } else {
                 // the value is already present
                 return ();
@@ -106,14 +106,34 @@ mod tests {
     use super::*;
 
     #[test]
+    fn get_returns_none_if_empty_tree() {
+        let n = Tree::new();
+        assert_eq!(n.get(42), None);
+    }
+
+    #[test]
     fn get_returns_none_if_not_exists() {
-        let n = Node::new(5);
+        let n = Tree::from(5);
         assert_eq!(n.get(42), None);
     }
 
     #[test]
     fn get_returns_existing_value() {
-        let n = Node::new(5);
+        let n = Tree::from(5);
         assert_eq!(n.get(5), Some(5));
+    }
+
+    #[test]
+    fn insert_then_get() {
+        let mut n = Tree::new();
+        n.insert(5);
+        assert_eq!(n.get(5), Some(5));
+    }
+
+    #[test]
+    fn string_tree_insert_then_get() {
+        let mut n = Tree::new();
+        n.insert("hello");
+        assert_eq!(n.get("hello"), Some("hello"));
     }
 }
